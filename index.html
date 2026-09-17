@@ -1,0 +1,3126 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0,
+               maximum-scale=1.0, user-scalable=no">
+
+<title>IPACK Logistics - Part Photo Album System</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #ffffff;
+    color: #333;
+    font-family: Arial, "Noto Sans Thai", sans-serif;
+}
+
+header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #fff;
+    border-bottom: 1px solid #ddd;
+    padding: 15px 20px;
+}
+
+.header-inner {
+    max-width: 1250px;
+    margin: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.logo {
+    font-size: 23px;
+    font-weight: bold;
+}
+
+.logo span {
+    display: block;
+    margin-top: 3px;
+    color: #888;
+    font-size: 12px;
+    font-weight: normal;
+}
+
+nav {
+    display: flex;
+    gap: 5px;
+}
+
+nav button {
+    border: 0;
+    background: transparent;
+    color: #555;
+    padding: 11px 16px;
+    border-radius: 9px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+nav button:hover {
+    background: #f2f2f2;
+}
+
+nav button.active {
+    background: #eee;
+    color: #222;
+    font-weight: bold;
+}
+
+main {
+    max-width: 1250px;
+    margin: auto;
+    padding: 28px 20px 60px;
+}
+
+.page {
+    display: none;
+}
+
+.page.active {
+    display: block;
+}
+
+.title {
+    margin-bottom: 20px;
+}
+
+.title h1 {
+    margin: 0 0 6px;
+    font-size: 28px;
+}
+
+.title p {
+    margin: 0;
+    color: #777;
+}
+
+.part-box {
+    border: 1px solid #ddd;
+    border-radius: 15px;
+    padding: 18px;
+    margin-bottom: 20px;
+}
+
+.part-box label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.part-input {
+    width: 100%;
+    padding: 14px;
+    border: 1px solid #d5d5d5;
+    border-radius: 10px;
+    font-size: 18px;
+    outline: none;
+}
+
+.part-input:focus {
+    border-color: #777;
+}
+
+.reset-row {
+    margin-top: 10px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.reset-btn {
+    border: 0;
+    background: #eee;
+    color: #444;
+    padding: 10px 16px;
+    border-radius: 9px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.reset-btn:hover {
+    background: #e3e3e3;
+}
+
+.photo-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+}
+
+.photo-card {
+    border: 1px solid #ddd;
+    border-radius: 15px;
+    padding: 14px;
+    text-align: center;
+}
+
+.photo-card h2 {
+    margin: 5px 0 13px;
+    font-size: 18px;
+}
+
+.preview {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background: #f5f5f5;
+    border-radius: 11px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.empty {
+    color: #999;
+    font-size: 14px;
+}
+
+.photo-buttons {
+    display: flex;
+    gap: 7px;
+}
+
+.btn {
+    flex: 1;
+    border: 0;
+    border-radius: 9px;
+    padding: 12px 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.camera-btn {
+    background: #555;
+    color: #fff;
+}
+
+.camera-btn:hover {
+    background: #333;
+}
+
+.upload-btn {
+    background: #eee;
+    color: #444;
+}
+
+.progress-box {
+    margin-top: 20px;
+    border: 1px solid #ddd;
+    border-radius: 15px;
+    padding: 18px;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 9px;
+}
+
+.progress {
+    width: 100%;
+    height: 12px;
+    background: #eee;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    width: 0%;
+    height: 100%;
+    background: #555;
+    transition: width .25s ease;
+}
+
+.status {
+    display: none;
+    margin-top: 13px;
+    padding: 12px;
+    border-radius: 9px;
+    font-size: 14px;
+}
+
+.status.success {
+    display: block;
+    background: #f0f3f0;
+    color: #4c5c4c;
+}
+
+.status.error {
+    display: block;
+    background: #f8eeee;
+    color: #884c4c;
+}
+
+.status.info {
+    display: block;
+    background: #f1f1f1;
+    color: #555;
+}
+
+.filter-box {
+    border: 1px solid #ddd;
+    border-radius: 15px;
+    padding: 17px;
+    margin-bottom: 18px;
+}
+
+.filter-title {
+    font-weight: bold;
+    margin-bottom: 13px;
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.filter-item label {
+    display: block;
+    color: #777;
+    font-size: 13px;
+    margin-bottom: 5px;
+}
+
+.filter-item input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #d7d7d7;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.filter-buttons button {
+    border: 0;
+    border-radius: 8px;
+    padding: 10px 16px;
+    cursor: pointer;
+}
+
+.search-filter {
+    background: #555;
+    color: #fff;
+}
+
+.clear-filter {
+    background: #eee;
+    color: #444;
+}
+
+.filter-result {
+    margin-top: 10px;
+    color: #777;
+    font-size: 13px;
+}
+
+.search {
+    width: 100%;
+    padding: 13px;
+    border: 1px solid #d5d5d5;
+    border-radius: 10px;
+    font-size: 16px;
+    margin-bottom: 18px;
+}
+
+.search:focus {
+    outline: none;
+    border-color: #777;
+}
+
+.album-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+}
+
+.album {
+    border: 1px solid #ddd;
+    border-radius: 15px;
+    padding: 14px;
+}
+
+.album-main-image {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: contain;
+    background: #f5f5f5;
+    border-radius: 10px;
+}
+
+.album-code {
+    margin-top: 11px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.album-date {
+    margin-top: 5px;
+    color: #777;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.album-thumbs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-top: 11px;
+}
+
+.album-thumbs img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 7px;
+}
+
+.album-actions {
+    display: flex;
+    gap: 7px;
+    margin-top: 11px;
+}
+
+.album-actions button {
+    flex: 1;
+    border: 0;
+    background: #eee;
+    color: #444;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.no-data {
+    grid-column: 1 / -1;
+    border: 1px solid #ddd;
+    border-radius: 15px;
+    padding: 35px;
+    text-align: center;
+    color: #888;
+}
+
+.download-top {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 15px;
+}
+
+.download-all {
+    border: 0;
+    background: #555;
+    color: #fff;
+    padding: 12px 17px;
+    border-radius: 9px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.download-list {
+    border: 1px solid #ddd;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.download-item {
+    padding: 16px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.download-item:last-child {
+    border-bottom: 0;
+}
+
+.download-info h3 {
+    margin: 0 0 5px;
+}
+
+.download-info small {
+    color: #777;
+}
+
+.download-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.download-actions button {
+    border: 0;
+    background: #eee;
+    color: #444;
+    padding: 9px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.camera-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0,0,0,.88);
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+}
+
+.camera-modal.show {
+    display: flex;
+}
+
+.camera-box {
+    width: min(900px, 100%);
+    background: #fff;
+    border-radius: 15px;
+    padding: 10px;
+}
+
+#cameraVideo {
+    width: 100%;
+    max-height: 75vh;
+    object-fit: contain;
+    background: #111;
+    border-radius: 10px;
+}
+
+.camera-controls {
+    display: flex;
+    gap: 8px;
+    margin-top: 9px;
+}
+
+.camera-controls button {
+    flex: 1;
+    border: 0;
+    border-radius: 9px;
+    padding: 14px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.take-photo {
+    background: #555;
+    color: #fff;
+}
+
+.close-camera {
+    background: #eee;
+    color: #444;
+}
+
+@media(max-width: 850px) {
+
+    .header-inner {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    nav {
+        width: 100%;
+    }
+
+    nav button {
+        flex: 1;
+    }
+
+    .photo-grid,
+    .album-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .download-item {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+@media(max-width: 500px) {
+
+    main {
+        padding: 20px 12px 40px;
+    }
+
+    .title h1 {
+        font-size: 24px;
+    }
+
+    .photo-buttons {
+        flex-direction: column;
+    }
+
+    .filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-buttons {
+        flex-direction: column;
+    }
+
+    .download-actions {
+        width: 100%;
+    }
+}
+</style>
+</head>
+
+
+<body>
+
+<header>
+
+<div class="header-inner">
+
+    <div class="logo">
+
+        IPACK Logistics
+
+        <span>
+            Part Photo Album System
+        </span>
+
+    </div>
+
+    <nav>
+
+        <button
+            id="navCapture"
+            class="active"
+            onclick="showPage('capture')">
+
+            📷 ถ่ายรูป
+
+        </button>
+
+        <button
+            id="navAlbums"
+            onclick="showPage('albums')">
+
+            📁 Albums
+
+        </button>
+
+        <button
+            id="navDownload"
+            onclick="showPage('download')">
+
+            📥 ดาวน์โหลด
+
+        </button>
+
+    </nav>
+
+</div>
+
+</header>
+
+
+<main>
+
+
+<!-- =========================
+     PAGE 1
+========================= -->
+
+<section
+    id="page-capture"
+    class="page active">
+
+    <div class="title">
+
+        <h1>
+            ถ่ายภาพชิ้นงาน
+        </h1>
+
+        <p>
+            กรอกรหัส Part และถ่ายภาพให้ครบ 3 มุม
+        </p>
+
+    </div>
+
+
+    <div class="part-box">
+
+        <label>
+            รหัส Part
+        </label>
+
+        <input
+            id="partCode"
+            class="part-input"
+            type="text"
+            placeholder="เช่น ASI191"
+            autocomplete="off">
+
+        <div class="reset-row">
+
+            <button
+                class="reset-btn"
+                onclick="resetCapture()">
+
+                🔄 รีเซ็ต
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <div class="photo-grid">
+
+
+        <!-- FRONT -->
+
+        <div class="photo-card">
+
+            <h2>
+                ด้านหน้า
+            </h2>
+
+            <div
+                id="preview-front"
+                class="preview">
+
+                <span class="empty">
+                    ยังไม่มีรูป
+                </span>
+
+            </div>
+
+            <div class="photo-buttons">
+
+                <button
+                    class="btn camera-btn"
+                    onclick="openCamera('front')">
+
+                    📷 ถ่ายรูป
+
+                </button>
+
+                <button
+                    class="btn upload-btn"
+                    onclick="
+                    document.getElementById('file-front').click()
+                    ">
+
+                    📁 เลือกรูป
+
+                </button>
+
+            </div>
+
+            <input
+                id="file-front"
+                type="file"
+                accept="image/*"
+                capture="environment"
+                hidden
+                onchange="loadImage(event,'front')">
+
+        </div>
+
+
+        <!-- BACK -->
+
+        <div class="photo-card">
+
+            <h2>
+                ด้านหลัง
+            </h2>
+
+            <div
+                id="preview-back"
+                class="preview">
+
+                <span class="empty">
+                    ยังไม่มีรูป
+                </span>
+
+            </div>
+
+            <div class="photo-buttons">
+
+                <button
+                    class="btn camera-btn"
+                    onclick="openCamera('back')">
+
+                    📷 ถ่ายรูป
+
+                </button>
+
+                <button
+                    class="btn upload-btn"
+                    onclick="
+                    document.getElementById('file-back').click()
+                    ">
+
+                    📁 เลือกรูป
+
+                </button>
+
+            </div>
+
+            <input
+                id="file-back"
+                type="file"
+                accept="image/*"
+                capture="environment"
+                hidden
+                onchange="loadImage(event,'back')">
+
+        </div>
+
+
+        <!-- MIDDLE -->
+
+        <div class="photo-card">
+
+            <h2>
+                ตรงกลาง
+            </h2>
+
+            <div
+                id="preview-middle"
+                class="preview">
+
+                <span class="empty">
+                    ยังไม่มีรูป
+                </span>
+
+            </div>
+
+            <div class="photo-buttons">
+
+                <button
+                    class="btn camera-btn"
+                    onclick="openCamera('middle')">
+
+                    📷 ถ่ายรูป
+
+                </button>
+
+                <button
+                    class="btn upload-btn"
+                    onclick="
+                    document.getElementById('file-middle').click()
+                    ">
+
+                    📁 เลือกรูป
+
+                </button>
+
+            </div>
+
+            <input
+                id="file-middle"
+                type="file"
+                accept="image/*"
+                capture="environment"
+                hidden
+                onchange="loadImage(event,'middle')">
+
+        </div>
+
+    </div>
+
+
+    <div class="progress-box">
+
+        <div class="progress-header">
+
+            <strong>
+                ความคืบหน้า
+            </strong>
+
+            <span id="progressText">
+                0 / 3 รูป
+            </span>
+
+        </div>
+
+        <div class="progress">
+
+            <div
+                id="progressBar"
+                class="progress-bar">
+            </div>
+
+        </div>
+
+        <div
+            id="status"
+            class="status">
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- =========================
+     PAGE 2
+========================= -->
+
+<section
+    id="page-albums"
+    class="page">
+
+    <div class="title">
+
+        <h1>
+            Albums
+        </h1>
+
+        <p>
+            ดูภาพและข้อมูล Album
+        </p>
+
+    </div>
+
+
+    <div class="filter-box">
+
+        <div class="filter-title">
+            🔎 เลือกวันและเวลา
+        </div>
+
+        <div class="filter-grid">
+
+            <div class="filter-item">
+
+                <label>
+                    วันที่เริ่มต้น
+                </label>
+
+                <input
+                    id="albumStartDate"
+                    type="date">
+
+            </div>
+
+            <div class="filter-item">
+
+                <label>
+                    เวลาเริ่มต้น
+                </label>
+
+                <input
+                    id="albumStartTime"
+                    type="time"
+                    value="00:00">
+
+            </div>
+
+            <div class="filter-item">
+
+                <label>
+                    วันที่สิ้นสุด
+                </label>
+
+                <input
+                    id="albumEndDate"
+                    type="date">
+
+            </div>
+
+            <div class="filter-item">
+
+                <label>
+                    เวลาสิ้นสุด
+                </label>
+
+                <input
+                    id="albumEndTime"
+                    type="time"
+                    value="23:59">
+
+            </div>
+
+        </div>
+
+        <div class="filter-buttons">
+
+            <button
+                class="search-filter"
+                onclick="renderAlbums()">
+
+                🔍 ค้นหา
+
+            </button>
+
+            <button
+                class="clear-filter"
+                onclick="clearAlbumFilter()">
+
+                ล้างตัวกรอง
+
+            </button>
+
+        </div>
+
+        <div
+            id="albumFilterResult"
+            class="filter-result">
+        </div>
+
+    </div>
+
+
+    <input
+        id="albumSearch"
+        class="search"
+        type="text"
+        placeholder="ค้นหาด้วยรหัส Part..."
+        oninput="renderAlbums()">
+
+
+    <div
+        id="albumGrid"
+        class="album-grid">
+    </div>
+
+</section>
+
+
+
+<!-- =========================
+     PAGE 3
+========================= -->
+
+<section
+    id="page-download"
+    class="page">
+
+    <div class="title">
+
+        <h1>
+            ดาวน์โหลด
+        </h1>
+
+        <p>
+            เลือกช่วงวันเวลาเพื่อดาวน์โหลด
+        </p>
+
+    </div>
+
+
+    <div class="filter-box">
+
+        <div class="filter-title">
+            🔎 เลือกวันและเวลา
+        </div>
+
+        <div class="filter-grid">
+
+            <div class="filter-item">
+
+                <label>
+                    วันที่เริ่มต้น
+                </label>
+
+                <input
+                    id="downloadStartDate"
+                    type="date">
+
+            </div>
+
+            <div class="filter-item">
+
+                <label>
+                    เวลาเริ่มต้น
+                </label>
+
+                <input
+                    id="downloadStartTime"
+                    type="time"
+                    value="00:00">
+
+            </div>
+
+            <div class="filter-item">
+
+                <label>
+                    วันที่สิ้นสุด
+                </label>
+
+                <input
+                    id="downloadEndDate"
+                    type="date">
+
+            </div>
+
+            <div class="filter-item">
+
+                <label>
+                    เวลาสิ้นสุด
+                </label>
+
+                <input
+                    id="downloadEndTime"
+                    type="time"
+                    value="23:59">
+
+            </div>
+
+        </div>
+
+        <div class="filter-buttons">
+
+            <button
+                class="search-filter"
+                onclick="renderDownloads()">
+
+                🔍 ค้นหา
+
+            </button>
+
+            <button
+                class="clear-filter"
+                onclick="clearDownloadFilter()">
+
+                ล้างตัวกรอง
+
+            </button>
+
+        </div>
+
+        <div
+            id="downloadFilterResult"
+            class="filter-result">
+        </div>
+
+    </div>
+
+
+    <div class="download-top">
+
+        <button
+            class="download-all"
+            onclick="downloadAllAlbums()">
+
+            📦 ดาวน์โหลดตามช่วงเวลาที่เลือก
+
+        </button>
+
+    </div>
+
+
+    <div
+        id="downloadList"
+        class="download-list">
+    </div>
+
+</section>
+
+</main>
+
+
+
+<!-- =========================
+     CAMERA
+========================= -->
+
+<div
+    id="cameraModal"
+    class="camera-modal">
+
+    <div class="camera-box">
+
+        <video
+            id="cameraVideo"
+            autoplay
+            playsinline>
+        </video>
+
+        <div class="camera-controls">
+
+            <button
+                class="take-photo"
+                onclick="capturePhoto()">
+
+                📸 ถ่ายภาพ
+
+            </button>
+
+            <button
+                class="close-camera"
+                onclick="closeCamera()">
+
+                ✕ ปิด
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<script>
+
+/* =====================================================
+   INDEXEDDB
+===================================================== */
+
+const DB_NAME = 'IPACK_Photo_Album_DB';
+
+const DB_VERSION = 1;
+
+const STORE_NAME = 'albums';
+
+let db = null;
+
+
+/* =====================================================
+   PHOTOS
+===================================================== */
+
+let photos = {
+    front: null,
+    back: null,
+    middle: null
+};
+
+let currentCameraType = null;
+
+let cameraStream = null;
+
+let isSaving = false;
+
+
+/* =====================================================
+   OPEN DATABASE
+===================================================== */
+
+function openDatabase() {
+
+    return new Promise((resolve, reject) => {
+
+        const request =
+            indexedDB.open(
+                DB_NAME,
+                DB_VERSION
+            );
+
+        request.onupgradeneeded =
+            function(event) {
+
+                const database =
+                    event.target.result;
+
+                if (
+                    !database.objectStoreNames
+                        .contains(STORE_NAME)
+                ) {
+
+                    database.createObjectStore(
+                        STORE_NAME,
+                        {
+                            keyPath: 'id'
+                        }
+                    );
+
+                }
+
+            };
+
+        request.onsuccess =
+            function(event) {
+
+                db =
+                    event.target.result;
+
+                resolve(db);
+
+            };
+
+        request.onerror =
+            function() {
+
+                reject(request.error);
+
+            };
+
+    });
+
+}
+
+
+/* =====================================================
+   ADD ALBUM
+===================================================== */
+
+function addAlbum(album) {
+
+    return new Promise((resolve, reject) => {
+
+        const transaction =
+            db.transaction(
+                STORE_NAME,
+                'readwrite'
+            );
+
+        const store =
+            transaction.objectStore(
+                STORE_NAME
+            );
+
+        const request =
+            store.add(album);
+
+        request.onsuccess =
+            function() {
+
+                resolve();
+
+            };
+
+        request.onerror =
+            function() {
+
+                reject(request.error);
+
+            };
+
+    });
+
+}
+
+
+/* =====================================================
+   GET ALBUMS
+===================================================== */
+
+function getAlbums() {
+
+    return new Promise((resolve, reject) => {
+
+        if (!db) {
+
+            resolve([]);
+
+            return;
+
+        }
+
+        const transaction =
+            db.transaction(
+                STORE_NAME,
+                'readonly'
+            );
+
+        const store =
+            transaction.objectStore(
+                STORE_NAME
+            );
+
+        const request =
+            store.getAll();
+
+        request.onsuccess =
+            function() {
+
+                const albums =
+                    request.result || [];
+
+                albums.sort(
+                    (a, b) =>
+                        b.timestamp -
+                        a.timestamp
+                );
+
+                resolve(albums);
+
+            };
+
+        request.onerror =
+            function() {
+
+                reject(request.error);
+
+            };
+
+    });
+
+}
+
+
+/* =====================================================
+   COMPRESS IMAGE
+===================================================== */
+
+function compressImage(fileOrDataURL) {
+
+    return new Promise((resolve, reject) => {
+
+        const img =
+            new Image();
+
+        img.onload =
+            function() {
+
+                let width =
+                    img.width;
+
+                let height =
+                    img.height;
+
+                const maxWidth =
+                    1280;
+
+                if (
+                    width > maxWidth
+                ) {
+
+                    height =
+                        height *
+                        (
+                            maxWidth /
+                            width
+                        );
+
+                    width =
+                        maxWidth;
+
+                }
+
+                const canvas =
+                    document.createElement(
+                        'canvas'
+                    );
+
+                canvas.width =
+                    width;
+
+                canvas.height =
+                    height;
+
+                const ctx =
+                    canvas.getContext(
+                        '2d'
+                    );
+
+                ctx.drawImage(
+                    img,
+                    0,
+                    0,
+                    width,
+                    height
+                );
+
+                const result =
+                    canvas.toDataURL(
+                        'image/jpeg',
+                        0.72
+                    );
+
+                resolve(result);
+
+            };
+
+        img.onerror =
+            function() {
+
+                reject(
+                    new Error(
+                        'ไม่สามารถอ่านรูปภาพได้'
+                    )
+                );
+
+            };
+
+        if (
+            typeof fileOrDataURL ===
+            'string'
+        ) {
+
+            img.src =
+                fileOrDataURL;
+
+        } else {
+
+            img.src =
+                URL.createObjectURL(
+                    fileOrDataURL
+                );
+
+        }
+
+    });
+
+}
+
+
+/* =====================================================
+   LOAD IMAGE
+===================================================== */
+
+async function loadImage(event, type) {
+
+    const file =
+        event.target.files[0];
+
+    if (!file) {
+
+        return;
+
+    }
+
+    try {
+
+        showStatus(
+            'กำลังเตรียมรูปภาพ...',
+            'info'
+        );
+
+        const compressed =
+            await compressImage(
+                file
+            );
+
+        photos[type] =
+            compressed;
+
+        showPreview(
+            type,
+            compressed
+        );
+
+        updateProgress();
+
+    }
+
+    catch(error) {
+
+        console.error(error);
+
+        showStatus(
+            'ไม่สามารถอ่านรูปภาพได้',
+            'error'
+        );
+
+    }
+
+    event.target.value = '';
+
+}
+
+
+/* =====================================================
+   PREVIEW
+===================================================== */
+
+function showPreview(type, src) {
+
+    const box =
+        document.getElementById(
+            'preview-' + type
+        );
+
+    box.innerHTML = `
+        <img
+            src="${src}"
+            alt="${type}">
+    `;
+
+}
+
+
+/* =====================================================
+   PROGRESS
+===================================================== */
+
+function updateProgress() {
+
+    let count = 0;
+
+    if (photos.front) count++;
+
+    if (photos.back) count++;
+
+    if (photos.middle) count++;
+
+    document
+        .getElementById(
+            'progressText'
+        )
+        .textContent =
+        count + ' / 3 รูป';
+
+    document
+        .getElementById(
+            'progressBar'
+        )
+        .style.width =
+        (
+            count / 3 * 100
+        ) + '%';
+
+    if (
+        count === 3 &&
+        !isSaving
+    ) {
+
+        const partCode =
+            document
+                .getElementById(
+                    'partCode'
+                )
+                .value
+                .trim();
+
+        if (!partCode) {
+
+            showStatus(
+                'กรุณากรอกรหัส Part แล้วระบบจะบันทึกอัตโนมัติ',
+                'error'
+            );
+
+            return;
+
+        }
+
+        saveAlbum();
+
+    }
+
+}
+
+
+/* =====================================================
+   PART CODE
+===================================================== */
+
+document
+    .getElementById(
+        'partCode'
+    )
+    .addEventListener(
+        'input',
+        function() {
+
+            const partCode =
+                this.value.trim();
+
+            if (
+                partCode &&
+                photos.front &&
+                photos.back &&
+                photos.middle &&
+                !isSaving
+            ) {
+
+                saveAlbum();
+
+            }
+
+        }
+    );
+
+
+/* =====================================================
+   SAVE
+===================================================== */
+
+async function saveAlbum() {
+
+    if (isSaving) {
+
+        return;
+
+    }
+
+    const partCode =
+        document
+            .getElementById(
+                'partCode'
+            )
+            .value
+            .trim();
+
+    if (!partCode) {
+
+        showStatus(
+            'กรุณากรอกรหัส Part',
+            'error'
+        );
+
+        return;
+
+    }
+
+    if (
+        !photos.front ||
+        !photos.back ||
+        !photos.middle
+    ) {
+
+        return;
+
+    }
+
+    isSaving = true;
+
+    try {
+
+        showStatus(
+            'กำลังบันทึก Album...',
+            'info'
+        );
+
+        const now =
+            new Date();
+
+        const album = {
+
+            id:
+                Date.now() +
+                Math.random(),
+
+            partCode:
+                partCode,
+
+            date:
+                formatDate(now),
+
+            time:
+                formatTime(now),
+
+            timestamp:
+                now.getTime(),
+
+            front:
+                photos.front,
+
+            back:
+                photos.back,
+
+            middle:
+                photos.middle
+
+        };
+
+        await addAlbum(album);
+
+        showStatus(
+            '✓ บันทึก Album อัตโนมัติเรียบร้อยแล้ว',
+            'success'
+        );
+
+        setTimeout(
+            function() {
+
+                resetCapture();
+
+                isSaving = false;
+
+                showPage('albums');
+
+            },
+            700
+        );
+
+    }
+
+    catch(error) {
+
+        console.error(
+            'SAVE ERROR:',
+            error
+        );
+
+        isSaving = false;
+
+        showStatus(
+            'ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่',
+            'error'
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   RESET
+===================================================== */
+
+function resetCapture() {
+
+    photos = {
+        front: null,
+        back: null,
+        middle: null
+    };
+
+    document
+        .getElementById(
+            'partCode'
+        )
+        .value = '';
+
+    [
+        'front',
+        'back',
+        'middle'
+    ].forEach(
+        type => {
+
+            document
+                .getElementById(
+                    'preview-' +
+                    type
+                )
+                .innerHTML = `
+                    <span class="empty">
+                        ยังไม่มีรูป
+                    </span>
+                `;
+
+        }
+    );
+
+    document
+        .getElementById(
+            'progressText'
+        )
+        .textContent =
+        '0 / 3 รูป';
+
+    document
+        .getElementById(
+            'progressBar'
+        )
+        .style.width =
+        '0%';
+
+    const status =
+        document.getElementById(
+            'status'
+        );
+
+    status.className =
+        'status';
+
+    status.textContent =
+        '';
+
+}
+
+
+/* =====================================================
+   STATUS
+===================================================== */
+
+function showStatus(text, type) {
+
+    const status =
+        document.getElementById(
+            'status'
+        );
+
+    status.textContent =
+        text;
+
+    status.className =
+        'status ' +
+        type;
+
+}
+
+
+/* =====================================================
+   DATE / TIME
+===================================================== */
+
+function formatDate(date) {
+
+    return date.toLocaleDateString(
+        'th-TH',
+        {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        }
+    );
+
+}
+
+function formatTime(date) {
+
+    return date.toLocaleTimeString(
+        'th-TH',
+        {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        }
+    );
+
+}
+
+
+/* =====================================================
+   FILTER
+===================================================== */
+
+function filterAlbums(
+    albums,
+    startDate,
+    startTime,
+    endDate,
+    endTime
+) {
+
+    let start = null;
+
+    let end = null;
+
+    if (startDate) {
+
+        start =
+            new Date(
+                startDate +
+                'T' +
+                (
+                    startTime ||
+                    '00:00'
+                ) +
+                ':00'
+            );
+
+    }
+
+    if (endDate) {
+
+        end =
+            new Date(
+                endDate +
+                'T' +
+                (
+                    endTime ||
+                    '23:59'
+                ) +
+                ':59'
+            );
+
+    }
+
+    return albums.filter(
+        album => {
+
+            const date =
+                new Date(
+                    album.timestamp
+                );
+
+            if (
+                start &&
+                date < start
+            ) {
+
+                return false;
+
+            }
+
+            if (
+                end &&
+                date > end
+            ) {
+
+                return false;
+
+            }
+
+            return true;
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+   ALBUMS
+===================================================== */
+
+async function renderAlbums() {
+
+    const albums =
+        await getAlbums();
+
+    const startDate =
+        document
+            .getElementById(
+                'albumStartDate'
+            )
+            ?.value || '';
+
+    const startTime =
+        document
+            .getElementById(
+                'albumStartTime'
+            )
+            ?.value ||
+        '00:00';
+
+    const endDate =
+        document
+            .getElementById(
+                'albumEndDate'
+            )
+            ?.value || '';
+
+    const endTime =
+        document
+            .getElementById(
+                'albumEndTime'
+            )
+            ?.value ||
+        '23:59';
+
+    let filtered =
+        filterAlbums(
+            albums,
+            startDate,
+            startTime,
+            endDate,
+            endTime
+        );
+
+    const search =
+        document
+            .getElementById(
+                'albumSearch'
+            )
+            ?.value
+            .trim()
+            .toLowerCase() ||
+        '';
+
+    if (search) {
+
+        filtered =
+            filtered.filter(
+                album =>
+                    String(
+                        album.partCode
+                    )
+                    .toLowerCase()
+                    .includes(search)
+            );
+
+    }
+
+    document
+        .getElementById(
+            'albumFilterResult'
+        )
+        .textContent =
+        `พบ ${filtered.length} Album`;
+
+    const grid =
+        document.getElementById(
+            'albumGrid'
+        );
+
+    if (!filtered.length) {
+
+        grid.innerHTML = `
+            <div class="no-data">
+                ไม่พบ Album
+            </div>
+        `;
+
+        return;
+
+    }
+
+    grid.innerHTML =
+        filtered
+            .map(
+                album => `
+
+                <div class="album">
+
+                    <img
+                        class="album-main-image"
+                        src="${album.front}">
+
+                    <div class="album-code">
+
+                        ${escapeHTML(
+                            album.partCode
+                        )}
+
+                    </div>
+
+                    <div class="album-date">
+
+                        📅 ${album.date}
+
+                        <br>
+
+                        🕐 ${album.time}
+
+                    </div>
+
+                    <div class="album-thumbs">
+
+                        <img
+                            src="${album.front}">
+
+                        <img
+                            src="${album.back}">
+
+                        <img
+                            src="${album.middle}">
+
+                    </div>
+
+                    <div class="album-actions">
+
+                        <button
+                            onclick="
+                                downloadSingleAlbum(
+                                    '${album.id}'
+                                )
+                            ">
+
+                            📦 ZIP
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+                `
+            )
+            .join('');
+
+}
+
+
+/* =====================================================
+   DOWNLOAD PAGE
+===================================================== */
+
+async function renderDownloads() {
+
+    const albums =
+        await getAlbums();
+
+    const startDate =
+        document
+            .getElementById(
+                'downloadStartDate'
+            )
+            ?.value || '';
+
+    const startTime =
+        document
+            .getElementById(
+                'downloadStartTime'
+            )
+            ?.value ||
+        '00:00';
+
+    const endDate =
+        document
+            .getElementById(
+                'downloadEndDate'
+            )
+            ?.value || '';
+
+    const endTime =
+        document
+            .getElementById(
+                'downloadEndTime'
+            )
+            ?.value ||
+        '23:59';
+
+    const filtered =
+        filterAlbums(
+            albums,
+            startDate,
+            startTime,
+            endDate,
+            endTime
+        );
+
+    document
+        .getElementById(
+            'downloadFilterResult'
+        )
+        .textContent =
+        `พบ ${filtered.length} Album`;
+
+    const list =
+        document.getElementById(
+            'downloadList'
+        );
+
+    if (!filtered.length) {
+
+        list.innerHTML = `
+            <div class="download-item">
+                ไม่พบข้อมูล
+            </div>
+        `;
+
+        return;
+
+    }
+
+    list.innerHTML =
+        filtered
+            .map(
+                album => `
+
+                <div class="download-item">
+
+                    <div class="download-info">
+
+                        <h3>
+                            ${escapeHTML(
+                                album.partCode
+                            )}
+                        </h3>
+
+                        <small>
+                            📅 ${album.date}
+                            &nbsp;&nbsp;
+                            🕐 ${album.time}
+                        </small>
+
+                    </div>
+
+                    <div class="download-actions">
+
+                        <button
+                            onclick="
+                                downloadSingleAlbum(
+                                    '${album.id}'
+                                )
+                            ">
+                            📦 ZIP
+                        </button>
+
+                        <button
+                            onclick="
+                                downloadImage(
+                                    '${album.front}',
+                                    '${safeFileName(album.partCode)}_FRONT.jpg'
+                                )
+                            ">
+                            หน้า
+                        </button>
+
+                        <button
+                            onclick="
+                                downloadImage(
+                                    '${album.back}',
+                                    '${safeFileName(album.partCode)}_BACK.jpg'
+                                )
+                            ">
+                            หลัง
+                        </button>
+
+                        <button
+                            onclick="
+                                downloadImage(
+                                    '${album.middle}',
+                                    '${safeFileName(album.partCode)}_MIDDLE.jpg'
+                                )
+                            ">
+                            กลาง
+                        </button>
+
+                    </div>
+
+                </div>
+
+                `
+            )
+            .join('');
+
+}
+
+
+/* =====================================================
+   SINGLE ZIP
+===================================================== */
+
+async function downloadSingleAlbum(id) {
+
+    const albums =
+        await getAlbums();
+
+    const album =
+        albums.find(
+            item =>
+                String(item.id) ===
+                String(id)
+        );
+
+    if (!album) {
+
+        alert('ไม่พบ Album');
+
+        return;
+
+    }
+
+    if (
+        typeof JSZip ===
+        'undefined'
+    ) {
+
+        alert(
+            'ไม่สามารถสร้าง ZIP ได้\n' +
+            'กรุณาเชื่อมต่ออินเทอร์เน็ต'
+        );
+
+        return;
+
+    }
+
+    const zip =
+        new JSZip();
+
+    const folderName =
+        safeFileName(
+            album.partCode
+        ) +
+        '_' +
+        album.timestamp;
+
+    const folder =
+        zip.folder(
+            folderName
+        );
+
+    folder.file(
+        'FRONT.jpg',
+        dataURLToBlob(
+            album.front
+        )
+    );
+
+    folder.file(
+        'BACK.jpg',
+        dataURLToBlob(
+            album.back
+        )
+    );
+
+    folder.file(
+        'MIDDLE.jpg',
+        dataURLToBlob(
+            album.middle
+        )
+    );
+
+    const blob =
+        await zip.generateAsync({
+
+            type: 'blob',
+
+            compression: 'DEFLATE',
+
+            compressionOptions: {
+                level: 6
+            }
+
+        });
+
+    saveBlob(
+        blob,
+        folderName +
+        '.zip'
+    );
+
+}
+
+
+/* =====================================================
+   DOWNLOAD ALL FILTERED
+===================================================== */
+
+async function downloadAllAlbums() {
+
+    const albums =
+        await getAlbums();
+
+    const startDate =
+        document
+            .getElementById(
+                'downloadStartDate'
+            )
+            ?.value || '';
+
+    const startTime =
+        document
+            .getElementById(
+                'downloadStartTime'
+            )
+            ?.value ||
+        '00:00';
+
+    const endDate =
+        document
+            .getElementById(
+                'downloadEndDate'
+            )
+            ?.value || '';
+
+    const endTime =
+        document
+            .getElementById(
+                'downloadEndTime'
+            )
+            ?.value ||
+        '23:59';
+
+    const filtered =
+        filterAlbums(
+            albums,
+            startDate,
+            startTime,
+            endDate,
+            endTime
+        );
+
+    if (!filtered.length) {
+
+        alert(
+            'ไม่พบ Album ตามช่วงวันเวลาที่เลือก'
+        );
+
+        return;
+
+    }
+
+    if (
+        typeof JSZip ===
+        'undefined'
+    ) {
+
+        alert(
+            'ไม่สามารถสร้าง ZIP ได้\n' +
+            'กรุณาเชื่อมต่ออินเทอร์เน็ต'
+        );
+
+        return;
+
+    }
+
+    const zip =
+        new JSZip();
+
+    filtered.forEach(
+        album => {
+
+            const folderName =
+                safeFileName(
+                    album.partCode
+                ) +
+                '_' +
+                album.timestamp;
+
+            const folder =
+                zip.folder(
+                    folderName
+                );
+
+            folder.file(
+                'FRONT.jpg',
+                dataURLToBlob(
+                    album.front
+                )
+            );
+
+            folder.file(
+                'BACK.jpg',
+                dataURLToBlob(
+                    album.back
+                )
+            );
+
+            folder.file(
+                'MIDDLE.jpg',
+                dataURLToBlob(
+                    album.middle
+                )
+            );
+
+        }
+    );
+
+    const blob =
+        await zip.generateAsync({
+
+            type: 'blob',
+
+            compression: 'DEFLATE',
+
+            compressionOptions: {
+                level: 6
+            }
+
+        });
+
+    saveBlob(
+        blob,
+        'IPACK_Photo_Albums.zip'
+    );
+
+}
+
+
+/* =====================================================
+   DATA URL → BLOB
+===================================================== */
+
+function dataURLToBlob(dataURL) {
+
+    const parts =
+        dataURL.split(',');
+
+    const mime =
+        parts[0]
+            .match(
+                /:(.*?);/
+            )[1];
+
+    const binary =
+        atob(
+            parts[1]
+        );
+
+    const array =
+        new Uint8Array(
+            binary.length
+        );
+
+    for (
+        let i = 0;
+        i < binary.length;
+        i++
+    ) {
+
+        array[i] =
+            binary.charCodeAt(i);
+
+    }
+
+    return new Blob(
+        [array],
+        {
+            type: mime
+        }
+    );
+
+}
+
+
+/* =====================================================
+   DOWNLOAD IMAGE
+===================================================== */
+
+function downloadImage(
+    dataURL,
+    fileName
+) {
+
+    const blob =
+        dataURLToBlob(
+            dataURL
+        );
+
+    saveBlob(
+        blob,
+        fileName
+    );
+
+}
+
+
+/* =====================================================
+   SAVE BLOB
+===================================================== */
+
+function saveBlob(
+    blob,
+    fileName
+) {
+
+    const url =
+        URL.createObjectURL(
+            blob
+        );
+
+    const link =
+        document.createElement(
+            'a'
+        );
+
+    link.href =
+        url;
+
+    link.download =
+        fileName;
+
+    document
+        .body
+        .appendChild(link);
+
+    link.click();
+
+    link.remove();
+
+    setTimeout(
+        function() {
+
+            URL.revokeObjectURL(
+                url
+            );
+
+        },
+        1000
+    );
+
+}
+
+
+/* =====================================================
+   SAFE FILE NAME
+===================================================== */
+
+function safeFileName(name) {
+
+    return String(name)
+        .replace(
+            /[\\/:*?"<>|]/g,
+            '_'
+        )
+        .replace(
+            /\s+/g,
+            '_'
+        );
+
+}
+
+
+/* =====================================================
+   ESCAPE HTML
+===================================================== */
+
+function escapeHTML(text) {
+
+    return String(text)
+        .replace(
+            /&/g,
+            '&amp;'
+        )
+        .replace(
+            /</g,
+            '&lt;'
+        )
+        .replace(
+            />/g,
+            '&gt;'
+        )
+        .replace(
+            /"/g,
+            '&quot;'
+        )
+        .replace(
+            /'/g,
+            '&#039;'
+        );
+
+}
+
+
+/* =====================================================
+   CAMERA
+===================================================== */
+
+async function openCamera(type) {
+
+    currentCameraType =
+        type;
+
+    if (
+        !navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia
+    ) {
+
+        alert(
+            'ไม่สามารถเปิดกล้องจากหน้านี้ได้\n\n' +
+            'กรุณาใช้ปุ่ม "เลือกรูป"'
+        );
+
+        return;
+
+    }
+
+    try {
+
+        cameraStream =
+            await navigator
+                .mediaDevices
+                .getUserMedia({
+
+                    video: {
+                        facingMode: {
+                            ideal:
+                                'environment'
+                        }
+                    },
+
+                    audio: false
+
+                });
+
+        const video =
+            document.getElementById(
+                'cameraVideo'
+            );
+
+        video.srcObject =
+            cameraStream;
+
+        document
+            .getElementById(
+                'cameraModal'
+            )
+            .classList
+            .add('show');
+
+    }
+
+    catch(error) {
+
+        console.error(error);
+
+        alert(
+            'ไม่สามารถเปิดกล้องได้\n\n' +
+            'กรุณาอนุญาตการใช้กล้อง\n' +
+            'หรือใช้ปุ่ม "เลือกรูป"'
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   CAPTURE PHOTO
+===================================================== */
+
+async function capturePhoto() {
+
+    const video =
+        document.getElementById(
+            'cameraVideo'
+        );
+
+    if (
+        !video.videoWidth ||
+        !video.videoHeight
+    ) {
+
+        alert(
+            'กล้องยังไม่พร้อม'
+        );
+
+        return;
+
+    }
+
+    const canvas =
+        document.createElement(
+            'canvas'
+        );
+
+    let width =
+        video.videoWidth;
+
+    let height =
+        video.videoHeight;
+
+    const maxWidth =
+        1280;
+
+    if (
+        width > maxWidth
+    ) {
+
+        height =
+            height *
+            (
+                maxWidth /
+                width
+            );
+
+        width =
+            maxWidth;
+
+    }
+
+    canvas.width =
+        width;
+
+    canvas.height =
+        height;
+
+    const ctx =
+        canvas.getContext(
+            '2d'
+        );
+
+    ctx.drawImage(
+        video,
+        0,
+        0,
+        width,
+        height
+    );
+
+    const image =
+        canvas.toDataURL(
+            'image/jpeg',
+            0.72
+        );
+
+    photos[
+        currentCameraType
+    ] =
+        image;
+
+    showPreview(
+        currentCameraType,
+        image
+    );
+
+    closeCamera();
+
+    updateProgress();
+
+}
+
+
+/* =====================================================
+   CLOSE CAMERA
+===================================================== */
+
+function closeCamera() {
+
+    if (cameraStream) {
+
+        cameraStream
+            .getTracks()
+            .forEach(
+                track => {
+                    track.stop();
+                }
+            );
+
+        cameraStream =
+            null;
+
+    }
+
+    document
+        .getElementById(
+            'cameraModal'
+        )
+        .classList
+        .remove('show');
+
+}
+
+
+/* =====================================================
+   SHOW PAGE
+===================================================== */
+
+function showPage(page) {
+
+    document
+        .querySelectorAll(
+            '.page'
+        )
+        .forEach(
+            p => {
+
+                p.classList
+                    .remove(
+                        'active'
+                    );
+
+            }
+        );
+
+    document
+        .getElementById(
+            'page-' + page
+        )
+        .classList
+        .add('active');
+
+    document
+        .querySelectorAll(
+            'nav button'
+        )
+        .forEach(
+            button => {
+
+                button.classList
+                    .remove(
+                        'active'
+                    );
+
+            }
+        );
+
+    if (
+        page ===
+        'capture'
+    ) {
+
+        document
+            .getElementById(
+                'navCapture'
+            )
+            .classList
+            .add('active');
+
+    }
+
+    if (
+        page ===
+        'albums'
+    ) {
+
+        document
+            .getElementById(
+                'navAlbums'
+            )
+            .classList
+            .add('active');
+
+        renderAlbums();
+
+    }
+
+    if (
+        page ===
+        'download'
+    ) {
+
+        document
+            .getElementById(
+                'navDownload'
+            )
+            .classList
+            .add('active');
+
+        renderDownloads();
+
+    }
+
+}
+
+
+/* =====================================================
+   CLEAR ALBUM FILTER
+===================================================== */
+
+function clearAlbumFilter() {
+
+    document
+        .getElementById(
+            'albumStartDate'
+        )
+        .value = '';
+
+    document
+        .getElementById(
+            'albumStartTime'
+        )
+        .value =
+        '00:00';
+
+    document
+        .getElementById(
+            'albumEndDate'
+        )
+        .value = '';
+
+    document
+        .getElementById(
+            'albumEndTime'
+        )
+        .value =
+        '23:59';
+
+    document
+        .getElementById(
+            'albumSearch'
+        )
+        .value = '';
+
+    renderAlbums();
+
+}
+
+
+/* =====================================================
+   CLEAR DOWNLOAD FILTER
+===================================================== */
+
+function clearDownloadFilter() {
+
+    document
+        .getElementById(
+            'downloadStartDate'
+        )
+        .value = '';
+
+    document
+        .getElementById(
+            'downloadStartTime'
+        )
+        .value =
+        '00:00';
+
+    document
+        .getElementById(
+            'downloadEndDate'
+        )
+        .value = '';
+
+    document
+        .getElementById(
+            'downloadEndTime'
+        )
+        .value =
+        '23:59';
+
+    renderDownloads();
+
+}
+
+
+/* =====================================================
+   INITIALIZE
+===================================================== */
+
+async function initialize() {
+
+    try {
+
+        await openDatabase();
+
+        await renderAlbums();
+
+        await renderDownloads();
+
+        console.log(
+            'IPACK Photo Album Database Ready'
+        );
+
+    }
+
+    catch(error) {
+
+        console.error(error);
+
+    }
+
+}
+
+initialize();
+
+
+/* =====================================================
+   AUTO REFRESH
+===================================================== */
+
+setInterval(
+    function() {
+
+        const active =
+            document.querySelector(
+                '.page.active'
+            );
+
+        if (
+            active &&
+            active.id ===
+            'page-albums'
+        ) {
+
+            renderAlbums();
+
+        }
+
+        if (
+            active &&
+            active.id ===
+            'page-download'
+        ) {
+
+            renderDownloads();
+
+        }
+
+    },
+    2000
+);
+
+</script>
+
+</body>
+</html>
