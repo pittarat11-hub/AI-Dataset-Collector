@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#eef5f7">
+<title>AI Dataset Collector</title>
+<style>
+:root{--bg:#eef5f7;--card:#fff;--text:#24343a;--muted:#718087;--line:#dbe4e7;--primary:#5b4636;--primary2:#7a5b43;--danger:#a94442;--shadow:0 8px 24px rgba(36,52,58,.08)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,"Noto Sans Thai",sans-serif}
+.topbar{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);padding:16px 5%;display:flex;justify-content:space-between;align-items:center;gap:20px}
+.topbar h1{margin:0;font-size:22px}.topbar p{margin:4px 0 0;color:var(--muted);font-size:13px}
+nav{display:flex;gap:8px}nav a{padding:9px 13px;border-radius:9px;text-decoration:none;color:var(--text);cursor:pointer}nav a.active{background:var(--primary);color:#fff}
+.container{max-width:1100px;margin:28px auto;padding:0 18px}.card,.info{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:18px;box-shadow:var(--shadow)}
+.section-title{display:flex;align-items:center;gap:10px;margin-bottom:18px}.section-title span{font-weight:700;color:var(--primary2)}h2{margin:0;font-size:20px}
+.form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}label{font-size:13px;font-weight:600}input{width:100%;margin-top:7px;padding:11px 12px;border:1px solid var(--line);border-radius:9px;font-size:15px;background:#fff;color:var(--text)}
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.photo-card{border:1px solid var(--line);border-radius:14px;padding:14px}.photo-card h3{margin:0 0 10px;font-size:16px}.photo-card small{color:var(--muted);font-size:11px}.preview{height:230px;border:1px dashed #bdcbd0;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--muted);overflow:hidden;background:#fafcfc;margin-bottom:10px}.preview img{width:100%;height:100%;object-fit:contain}.file{display:none}
+.btn{border:0;border-radius:9px;padding:10px 14px;cursor:pointer;font-weight:700;font-size:14px}.btn.primary{background:var(--primary);color:#fff}.btn.secondary{background:#e9eff1;color:var(--text)}.btn.danger{background:#f8e8e7;color:var(--danger)}.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}.btn.large{padding:13px 20px}.hidden{display:none!important}.actions{display:flex;gap:10px;margin-top:18px}.message{margin-top:12px;min-height:20px}.hint,.info,p{color:var(--muted)}.filters{display:grid;grid-template-columns:1.5fr 1fr auto auto;gap:10px}.gallery-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.gallery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:18px}.dataset-card{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;cursor:pointer}.thumbs{display:grid;grid-template-columns:repeat(3,1fr);height:150px}.thumbs img{width:100%;height:100%;object-fit:cover;border-right:1px solid #fff}.dataset-info{padding:13px}.dataset-info h3{margin:0 0 5px;font-size:16px}.dataset-info p{margin:3px 0;font-size:12px}.empty{padding:35px;text-align:center;color:var(--muted);grid-column:1/-1}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;padding:20px;overflow:auto}.modal-content{max-width:900px;margin:30px auto;background:#fff;border-radius:16px;padding:22px;position:relative}.modal-close{position:absolute;right:12px;top:8px;border:0;background:transparent;font-size:30px;cursor:pointer}.modal-images{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:15px 0}.modal-images img{width:100%;max-height:400px;object-fit:contain;border:1px solid var(--line);border-radius:10px}.modal-content .btn{margin-right:8px}
+@media(max-width:800px){.form-grid{grid-template-columns:repeat(2,1fr)}.photo-grid,.gallery-grid{grid-template-columns:1fr}.filters{grid-template-columns:1fr 1fr}.filters .btn{grid-column:span 1}.topbar{align-items:flex-start;flex-direction:column}.modal-images{grid-template-columns:1fr}}
+@media(max-width:520px){.form-grid,.filters{grid-template-columns:1fr}.preview{height:210px}.actions{flex-direction:column}.actions .btn{width:100%}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+</head>
+<body>
+<header class="topbar">
+  <div><h1>AI Dataset Collector</h1><p>เก็บภาพชิ้นงาน 3 มุม Front / Middle / Back</p></div>
+  <nav><a href="#" data-page="home" class="active">Home</a><a href="#" data-page="gallery">Gallery</a></nav>
+</header>
+
+<main class="container">
+<section id="homePage">
+  <section class="card">
+    <div class="section-title"><span>01</span><h2>ข้อมูล Dataset</h2></div>
+    <div class="form-grid">
+      <label>ชื่อพนักงาน<input id="employee" type="text" placeholder="กรอกชื่อพนักงาน"></label>
+      <label>ชื่อ Part<input id="part" type="text" placeholder="กรอกชื่อ Part"></label>
+      <label>วันที่<input id="date" readonly></label>
+      <label>เวลา<input id="time" readonly></label>
+    </div>
+  </section>
+  <section class="card">
+    <div class="section-title"><span>02</span><h2>ถ่ายภาพ</h2></div>
+    <p class="hint">ถ่ายให้ครบ 3 มุม: หน้า / ตรงกลาง / หลัง</p>
+    <div class="photo-grid">
+      <div class="photo-card"><h3>ด้านหน้า <small>FRONT</small></h3><div class="preview" id="preview-front">ยังไม่มีภาพ</div><input id="file-front" class="file" type="file" accept="image/*" capture="environment"><button class="btn secondary" onclick="pick('front')">📷 ถ่าย / เลือกภาพ</button><button id="again-front" class="btn ghost hidden" onclick="resetPhoto('front')">ถ่ายใหม่</button></div>
+      <div class="photo-card"><h3>ตรงกลาง <small>MIDDLE</small></h3><div class="preview" id="preview-middle">ยังไม่มีภาพ</div><input id="file-middle" class="file" type="file" accept="image/*" capture="environment"><button class="btn secondary" onclick="pick('middle')">📷 ถ่าย / เลือกภาพ</button><button id="again-middle" class="btn ghost hidden" onclick="resetPhoto('middle')">ถ่ายใหม่</button></div>
+      <div class="photo-card"><h3>ด้านหลัง <small>BACK</small></h3><div class="preview" id="preview-back">ยังไม่มีภาพ</div><input id="file-back" class="file" type="file" accept="image/*" capture="environment"><button class="btn secondary" onclick="pick('back')">📷 ถ่าย / เลือกภาพ</button><button id="again-back" class="btn ghost hidden" onclick="resetPhoto('back')">ถ่ายใหม่</button></div>
+    </div>
+    <div class="actions"><button id="save" class="btn primary large">บันทึก Dataset</button><button id="clear" class="btn ghost large">ล้างข้อมูล</button></div>
+    <div id="message" class="message"></div>
+  </section>
+  <section class="info">ข้อมูลจะถูกเก็บไว้ใน Browser ของเครื่องนี้เท่านั้น และไม่ส่งไป Server</section>
+</section>
+
+<section id="galleryPage" class="hidden">
+  <section class="card">
+    <div class="section-title"><span>01</span><h2>ค้นหา Dataset</h2></div>
+    <div class="filters"><input id="search" type="search" placeholder="ค้นหา Part หรือชื่อพนักงาน"><input id="dateFilter" type="date"><button id="allZip" class="btn primary">ดาวน์โหลด Backup</button><button id="clearAll" class="btn danger">ลบทั้งหมด</button></div>
+  </section>
+  <section class="card">
+    <div class="gallery-head"><div><h2>Dataset ที่บันทึก</h2><p id="count"></p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button id="csv" class="btn secondary">ดาวน์โหลด CSV</button><button id="xlsx" class="btn primary">📊 ดาวน์โหลด Excel พร้อมรูป</button></div></div>
+    <div id="gallery" class="gallery-grid"></div>
+  </section>
+</section>
+</main>
+
+<div id="modal" class="modal hidden"><div class="modal-content"><button id="close" class="modal-close">×</button><h2 id="modalTitle"></h2><p id="modalInfo"></p><div id="modalImages" class="modal-images"></div><button id="oneZip" class="btn primary">ดาวน์โหลด Dataset นี้</button><button id="deleteOne" class="btn danger">ลบ Dataset นี้</button></div></div>
+<script>
+const DB_KEY="ai_dataset_collector_v1";
+let datasets=loadData(), selectedId=null, photos={front:null,middle:null,back:null};
+
+function loadData(){try{return JSON.parse(localStorage.getItem(DB_KEY)||"[]")}catch(e){return[]}}
+function saveData(){localStorage.setItem(DB_KEY,JSON.stringify(datasets))}
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function nowParts(){const d=new Date();return{date:d.toLocaleDateString("en-CA"),time:d.toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}}
+function refreshClock(){const n=nowParts();document.getElementById("date").value=n.date;document.getElementById("time").value=n.time}
+function pick(side){document.getElementById("file-"+side).click()}
+function resetPhoto(side){photos[side]=null;document.getElementById("file-"+side).value="";document.getElementById("preview-"+side).textContent="ยังไม่มีภาพ";document.getElementById("again-"+side).classList.add("hidden")}
+function handleFile(side,file){if(!file)return;const reader=new FileReader();reader.onload=()=>{photos[side]=reader.result;document.getElementById("preview-"+side).innerHTML=`<img src="${reader.result}" alt="${side}">`;document.getElementById("again-"+side).classList.remove("hidden")};reader.readAsDataURL(file)}
+["front","middle","back"].forEach(side=>document.getElementById("file-"+side).addEventListener("change",e=>handleFile(side,e.target.files[0])));
+
+function clearForm(){document.getElementById("employee").value="";document.getElementById("part").value="";["front","middle","back"].forEach(resetPhoto);document.getElementById("message").textContent=""}
+document.getElementById("clear").onclick=clearForm;
+document.getElementById("save").onclick=()=>{
+ const employee=document.getElementById("employee").value.trim(),part=document.getElementById("part").value.trim();
+ if(!employee||!part)return message("กรุณากรอกชื่อพนักงานและชื่อ Part","error");
+ if(!photos.front||!photos.middle||!photos.back)return message("กรุณาถ่ายภาพให้ครบ 3 มุม: Front / Middle / Back","error");
+ const n=nowParts();const item={id:Date.now().toString(),employee,part,date:n.date,time:n.time,images:{...photos}};
+ datasets.unshift(item);saveData();message("บันทึก Dataset เรียบร้อยแล้ว","ok");renderGallery();clearForm();
+};
+function message(t,type){const el=document.getElementById("message");el.textContent=t;el.style.color=type==="error"?"#a94442":"#39704a"}
+
+function showPage(page){
+ document.querySelectorAll("nav a").forEach(a=>a.classList.remove("active"));
+ document.querySelector(`[data-page="${page}"]`).classList.add("active");
+ document.getElementById("homePage").classList.toggle("hidden",page!=="home");
+ document.getElementById("galleryPage").classList.toggle("hidden",page!=="gallery");
+ if(page==="gallery")renderGallery();
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+document.querySelectorAll("nav a").forEach(a=>a.onclick=e=>{e.preventDefault();showPage(a.dataset.page)});
+
+function filtered(){const q=document.getElementById("search").value.trim().toLowerCase(),d=document.getElementById("dateFilter").value;return datasets.filter(x=>(!q||x.part.toLowerCase().includes(q)||x.employee.toLowerCase().includes(q))&&(!d||x.date===d))}
+function renderGallery(){
+ const list=filtered(),g=document.getElementById("gallery");document.getElementById("count").textContent=`${list.length} Dataset`;
+ if(!list.length){g.innerHTML='<div class="empty">ยังไม่มี Dataset ที่ตรงกับเงื่อนไข</div>';return}
+ g.innerHTML=list.map(x=>`<div class="dataset-card" onclick="openDataset('${x.id}')"><div class="thumbs">${["front","middle","back"].map(s=>`<img src="${x.images[s]}" alt="${s}">`).join("")}</div><div class="dataset-info"><h3>${esc(x.part)}</h3><p>พนักงาน: ${esc(x.employee)}</p><p>${esc(x.date)} ${esc(x.time)}</p></div></div>`).join("");
+}
+document.getElementById("search").oninput=renderGallery;document.getElementById("dateFilter").onchange=renderGallery;
+document.getElementById("clearAll").onclick=()=>{if(!datasets.length)return;if(confirm("ต้องการลบ Dataset ทั้งหมดหรือไม่?")){datasets=[];saveData();renderGallery()}};
+
+function openDataset(id){const x=datasets.find(v=>v.id===id);if(!x)return;selectedId=id;document.getElementById("modalTitle").textContent=x.part;document.getElementById("modalInfo").textContent=`พนักงาน: ${x.employee} | ${x.date} ${x.time}`;document.getElementById("modalImages").innerHTML=["front","middle","back"].map(s=>`<img src="${x.images[s]}" alt="${s}">`).join("");document.getElementById("modal").classList.remove("hidden")}
+document.getElementById("close").onclick=()=>document.getElementById("modal").classList.add("hidden");
+document.getElementById("modal").onclick=e=>{if(e.target.id==="modal")e.currentTarget.classList.add("hidden")};
+document.getElementById("deleteOne").onclick=()=>{if(!selectedId)return;if(confirm("ลบ Dataset นี้หรือไม่?")){datasets=datasets.filter(x=>x.id!==selectedId);saveData();document.getElementById("modal").classList.add("hidden");renderGallery()}};
+
+function downloadBlob(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+function csvEscape(v){return `"${String(v??"").replace(/"/g,'""')}"`}
+document.getElementById("csv").onclick=()=>{
+ const rows=[["Part","Employee","Date","Time","Front","Middle","Back"],...filtered().map(x=>[x.part,x.employee,x.date,x.time,"front.jpg","middle.jpg","back.jpg"])];
+ downloadBlob(new Blob(["\ufeff",rows.map(r=>r.map(csvEscape).join(",")).join("\n")],{type:"text/csv;charset=utf-8"}),"dataset.csv");
+};
+
+// สร้างไฟล์ Excel .xlsx ที่ฝังรูป Front / Middle / Back เป็นรูปจริงในแต่ละแถว
+function dataUrlToBuffer(dataUrl){
+ const b64=dataUrl.split(",")[1]||""; const bin=atob(b64); const u8=new Uint8Array(bin.length);
+ for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i); return u8.buffer;
+}
+document.getElementById("xlsx").onclick=async()=>{
+ const list=filtered();
+ if(!list.length){alert("ไม่มี Dataset สำหรับส่งออก");return}
+ if(typeof ExcelJS==="undefined"){alert("ยังโหลด Excel module ไม่สำเร็จ กรุณาเปิดหน้าเว็บใหม่แล้วลองอีกครั้ง");return}
+ const btn=document.getElementById("xlsx"); btn.disabled=true; btn.textContent="กำลังสร้าง Excel...";
+ try{
+   const wb=new ExcelJS.Workbook(); const ws=wb.addWorksheet("Dataset");
+   ws.columns=[
+     {header:"Part",key:"part",width:22},{header:"Employee",key:"employee",width:20},
+     {header:"Date",key:"date",width:13},{header:"Time",key:"time",width:12},
+     {header:"Front",key:"front",width:20},{header:"Middle",key:"middle",width:20},{header:"Back",key:"back",width:20}
+   ];
+   const header=ws.getRow(1); header.height=24; header.font={bold:true}; header.alignment={vertical:"middle",horizontal:"center"};
+   for(const item of list){
+     const row=ws.addRow({part:item.part,employee:item.employee,date:item.date,time:item.time,front:"",middle:"",back:""});
+     row.height=105; row.alignment={vertical:"middle",horizontal:"center"};
+     for(const side of ["front","middle","back"]){
+       const src=item.images[side]; if(!src)continue;
+       const ext=(src.match(/^data:image\/(png|gif|jpeg|jpg)/i)||[])[1]||"jpeg";
+       const imageId=wb.addImage({buffer:dataUrlToBuffer(src),extension:ext.toLowerCase()==="jpg"?"jpeg":ext.toLowerCase()});
+       const col=side==="front"?4:side==="middle"?5:6;
+       ws.addImage(imageId,{tl:{col:col,row:row.number-1},ext:{width:125,height:95}});
+     }
+   }
+   const buffer=await wb.xlsx.writeBuffer();
+   downloadBlob(new Blob([buffer],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),"dataset_with_images.xlsx");
+ }catch(err){console.error(err);alert("สร้าง Excel ไม่สำเร็จ: "+(err.message||err))}
+ finally{btn.disabled=false;btn.textContent="📊 ดาวน์โหลด Excel พร้อมรูป"}
+};
+
+// ZIP creation without external library: generate a downloadable HTML package containing the images.
+// For maximum GitHub-only compatibility, also provide a browser-native JSON backup.
+function downloadBackup(list,name="dataset-backup.json"){
+ downloadBlob(new Blob([JSON.stringify(list,null,2)],{type:"application/json"}),name);
+}
+document.getElementById("allZip").onclick=()=>downloadBackup(filtered(),"dataset-backup.json");
+document.getElementById("oneZip").onclick=()=>{const x=datasets.find(v=>v.id===selectedId);if(x)downloadBackup([x],`${x.part}-dataset.json`)};
+
+refreshClock();setInterval(refreshClock,1000);renderGallery();
+</script>
+</body>
+</html>
