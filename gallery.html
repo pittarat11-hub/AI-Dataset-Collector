@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#eef4f8">
+
+<title>Gallery - ASI191 Dataset</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, "Noto Sans Thai", sans-serif;
+    background: #f3f7fa;
+    color: #263746;
+}
+
+header {
+    background: #ffffff;
+    border-bottom: 1px solid #dce5eb;
+    padding: 16px 24px;
+}
+
+.header-inner {
+    max-width: 1200px;
+    margin: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.subtitle {
+    font-size: 13px;
+    color: #71808d;
+}
+
+nav a {
+    text-decoration: none;
+    color: #526574;
+    padding: 9px 13px;
+    border-radius: 8px;
+}
+
+nav a.active,
+nav a:hover {
+    background: #e5f0f7;
+    color: #31566e;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 18px 50px;
+}
+
+.card {
+    background: white;
+    border: 1px solid #dce5eb;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto auto;
+    gap: 10px;
+}
+
+input {
+    padding: 12px;
+    border: 1px solid #ccd8e0;
+    border-radius: 9px;
+    font-size: 15px;
+}
+
+button {
+    border: 0;
+    border-radius: 9px;
+    padding: 12px 17px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.btn-primary {
+    background: #52758c;
+    color: white;
+}
+
+.btn-secondary {
+    background: #e8eef2;
+    color: #455b69;
+}
+
+.btn-danger {
+    background: #f4dddd;
+    color: #8b4141;
+}
+
+.dataset-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+}
+
+.dataset {
+    background: white;
+    border: 1px solid #dce5eb;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.dataset-info {
+    padding: 15px;
+}
+
+.dataset-info h3 {
+    margin: 0 0 7px;
+}
+
+.dataset-info p {
+    margin: 4px 0;
+    color: #6d7d88;
+    font-size: 14px;
+}
+
+.images {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+    background: #edf2f5;
+}
+
+.images img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    cursor: pointer;
+}
+
+.dataset-actions {
+    display: flex;
+    gap: 7px;
+    padding: 12px;
+    flex-wrap: wrap;
+}
+
+.empty {
+    text-align: center;
+    padding: 50px 20px;
+    color: #7b8992;
+}
+
+.stats {
+    margin-top: 12px;
+    color: #61727e;
+}
+
+@media (max-width: 800px) {
+
+    .controls {
+        grid-template-columns: 1fr;
+    }
+
+    .dataset-list {
+        grid-template-columns: 1fr;
+    }
+
+    .header-inner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+
+    .container {
+        padding: 0 12px 35px;
+    }
+
+    .card {
+        padding: 15px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="header-inner">
+
+        <div>
+            <div class="logo">AI Dataset Collector</div>
+            <div class="subtitle">
+                Dataset ชิ้นงาน ASI191
+            </div>
+        </div>
+
+        <nav>
+            <a href="index.html">เก็บข้อมูล</a>
+            <a href="gallery.html" class="active">Gallery</a>
+        </nav>
+
+    </div>
+</header>
+
+
+<main class="container">
+
+    <h1>Dataset Gallery</h1>
+
+    <div class="card">
+
+        <div class="controls">
+
+            <input
+                type="text"
+                id="search"
+                placeholder="ค้นหาชื่อพนักงาน / ชิ้นงาน"
+            >
+
+            <input
+                type="date"
+                id="dateFilter"
+            >
+
+            <button
+                class="btn-primary"
+                onclick="downloadAll()"
+            >
+                ดาวน์โหลดทั้งหมด
+            </button>
+
+            <button
+                class="btn-danger"
+                onclick="deleteAll()"
+            >
+                ลบทั้งหมด
+            </button>
+
+        </div>
+
+        <div class="stats" id="stats"></div>
+
+    </div>
+
+
+    <div id="datasetList" class="dataset-list"></div>
+
+</main>
+
+
+<script>
+const DB_NAME = "ASI191DatasetDB";
+const DB_VERSION = 1;
+const STORE_NAME = "datasets";
+
+
+function openDB() {
+
+    return new Promise((resolve, reject) => {
+
+        const request =
+            indexedDB.open(DB_NAME, DB_VERSION);
+
+        request.onupgradeneeded = function(event) {
+
+            const db = event.target.result;
+
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+
+                db.createObjectStore(
+                    STORE_NAME,
+                    { keyPath: "id" }
+                );
+            }
+        };
+
+        request.onsuccess = function(event) {
+
+            resolve(event.target.result);
+
+        };
+
+        request.onerror = function() {
+
+            reject(request.error);
+
+        };
+    });
+}
+
+
+async function getAllDatasets() {
+
+    const db = await openDB();
+
+    return new Promise((resolve, reject) => {
+
+        const transaction =
+            db.transaction(
+                STORE_NAME,
+                "readonly"
+            );
+
+        const request =
+            transaction
+                .objectStore(STORE_NAME)
+                .getAll();
+
+        request.onsuccess = function() {
+
+            resolve(request.result);
+
+        };
+
+        request.onerror = function() {
+
+            reject(request.error);
+
+        };
+    });
+}
+
+
+function blobURL(blob) {
+
+    if (!blob) return "";
+
+    return URL.createObjectURL(blob);
+}
+
+
+async function render() {
+
+    const datasets =
+        await getAllDatasets();
+
+    const search =
+        document.getElementById("search")
+            .value
+            .toLowerCase()
+            .trim();
+
+    const date =
+        document.getElementById("dateFilter")
+            .value;
+
+
+    const filtered =
+        datasets.filter(function(item) {
+
+            const matchSearch =
+                !search ||
+                item.employee
+                    .toLowerCase()
+                    .includes(search) ||
+                item.part
+                    .toLowerCase()
+                    .includes(search);
+
+            const matchDate =
+                !date ||
+                item.date === date;
+
+            return matchSearch && matchDate;
+        });
+
+
+    filtered.sort(function(a, b) {
+
+        return Number(b.id) - Number(a.id);
+
+    });
+
+
+    document.getElementById("stats").textContent =
+        `พบ ${filtered.length} Dataset จากทั้งหมด ${datasets.length} Dataset`;
+
+
+    const container =
+        document.getElementById("datasetList");
+
+
+    if (filtered.length === 0) {
+
+        container.innerHTML =
+            `<div class="card empty">
+                ยังไม่มี Dataset
+            </div>`;
+
+        return;
+    }
+
+
+    container.innerHTML = "";
+
+
+    filtered.forEach(function(item) {
+
+        const div =
+            document.createElement("div");
+
+        div.className = "dataset";
+
+
+        const front =
+            blobURL(item.images.front);
+
+        const middle =
+            blobURL(item.images.middle);
+
+        const back =
+            blobURL(item.images.back);
+
+
+        div.innerHTML = `
+
+            <div class="images">
+
+                <img
+                    src="${front}"
+                    alt="Front"
+                    onclick="openImage('${front}')"
+                >
+
+                <img
+                    src="${middle}"
+                    alt="Middle"
+                    onclick="openImage('${middle}')"
+                >
+
+                <img
+                    src="${back}"
+                    alt="Back"
+                    onclick="openImage('${back}')"
+                >
+
+            </div>
+
+            <div class="dataset-info">
+
+                <h3>${escapeHTML(item.part)}</h3>
+
+                <p>
+                    พนักงาน: ${escapeHTML(item.employee)}
+                </p>
+
+                <p>
+                    วันที่: ${item.date}
+                </p>
+
+                <p>
+                    เวลา: ${item.time}
+                </p>
+
+            </div>
+
+            <div class="dataset-actions">
+
+                <button
+                    class="btn-primary"
+                    onclick="downloadDataset('${item.id}')"
+                >
+                    ดาวน์โหลด
+                </button>
+
+                <button
+                    class="btn-danger"
+                    onclick="deleteDataset('${item.id}')"
+                >
+                    ลบ
+                </button>
+
+            </div>
+        `;
+
+
+        container.appendChild(div);
+
+    });
+}
+
+
+function escapeHTML(text) {
+
+    return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+
+function openImage(url) {
+
+    window.open(url, "_blank");
+
+}
+
+
+async function deleteDataset(id) {
+
+    if (!confirm("ต้องการลบ Dataset นี้หรือไม่?")) {
+
+        return;
+    }
+
+
+    const db = await openDB();
+
+
+    await new Promise((resolve, reject) => {
+
+        const transaction =
+            db.transaction(
+                STORE_NAME,
+                "readwrite"
+            );
+
+        transaction
+            .objectStore(STORE_NAME)
+            .delete(id);
+
+        transaction.oncomplete = resolve;
+
+        transaction.onerror = function() {
+
+            reject(transaction.error);
+
+        };
+    });
+
+
+    render();
+}
+
+
+async function deleteAll() {
+
+    const datasets =
+        await getAllDatasets();
+
+    if (datasets.length === 0) {
+
+        alert("ยังไม่มี Dataset");
+
+        return;
+    }
+
+
+    if (!confirm(
+        `ต้องการลบทั้งหมด ${datasets.length} Dataset หรือไม่?`
+    )) {
+
+        return;
+    }
+
+
+    const db = await openDB();
+
+
+    await new Promise((resolve, reject) => {
+
+        const transaction =
+            db.transaction(
+                STORE_NAME,
+                "readwrite"
+            );
+
+        transaction
+            .objectStore(STORE_NAME)
+            .clear();
+
+        transaction.oncomplete = resolve;
+
+        transaction.onerror = function() {
+
+            reject(transaction.error);
+
+        };
+    });
+
+
+    render();
+}
+
+
+function downloadBlob(blob, filename) {
+
+    const url =
+        URL.createObjectURL(blob);
+
+    const a =
+        document.createElement("a");
+
+    a.href = url;
+
+    a.download = filename;
+
+    document.body.appendChild(a);
+
+    a.click();
+
+    a.remove();
+
+    setTimeout(function() {
+
+        URL.revokeObjectURL(url);
+
+    }, 1000);
+}
+
+
+async function downloadDataset(id) {
+
+    const datasets =
+        await getAllDatasets();
+
+    const item =
+        datasets.find(
+            x => x.id === id
+        );
+
+    if (!item) return;
+
+
+    const zip = new JSZip();
+
+
+    const folder =
+        zip.folder(
+            `${item.part}_${item.date}_${item.time.replaceAll(":", "-")}`
+        );
+
+
+    folder.file(
+        "front.jpg",
+        item.images.front
+    );
+
+    folder.file(
+        "middle.jpg",
+        item.images.middle
+    );
+
+    folder.file(
+        "back.jpg",
+        item.images.back
+    );
+
+
+    const csv =
+        createCSV([item]);
+
+    folder.file(
+        "metadata.csv",
+        csv
+    );
+
+
+    const blob =
+        await zip.generateAsync({
+            type: "blob"
+        });
+
+
+    downloadBlob(
+        blob,
+        `${item.part}_${item.date}.zip`
+    );
+}
+
+
+async function downloadAll() {
+
+    const datasets =
+        await getAllDatasets();
+
+    if (datasets.length === 0) {
+
+        alert("ยังไม่มี Dataset");
+
+        return;
+    }
+
+
+    const zip = JSZip;
+
+
+    const root =
+        new zip();
+
+
+    const metadata =
+        [];
+
+
+    datasets.forEach(function(item, index) {
+
+        const folderName =
+            `${item.part}_${item.date}_${item.time.replaceAll(":", "-")}_${index + 1}`;
+
+        const folder =
+            root.folder(folderName);
+
+
+        folder.file(
+            "front.jpg",
+            item.images.front
+        );
+
+        folder.file(
+            "middle.jpg",
+            item.images.middle
+        );
+
+        folder.file(
+            "back.jpg",
+            item.images.back
+        );
+
+
+        metadata.push(item);
+
+    });
+
+
+    root.file(
+        "metadata.csv",
+        createCSV(metadata)
+    );
+
+
+    const blob =
+        await root.generateAsync({
+            type: "blob"
+        });
+
+
+    downloadBlob(
+        blob,
+        "ASI191_AI_Dataset.zip"
+    );
+}
+
+
+function csvEscape(value) {
+
+    return '"' +
+        String(value ?? "")
+            .replaceAll('"', '""') +
+        '"';
+}
+
+
+function createCSV(datasets) {
+
+    let csv =
+        "\uFEFFdataset_id,employee_name,part_name,date,time,image_position,image_filename\n";
+
+
+    datasets.forEach(function(item) {
+
+        csv +=
+            `${csvEscape(item.id)},` +
+            `${csvEscape(item.employee)},` +
+            `${csvEscape(item.part)},` +
+            `${csvEscape(item.date)},` +
+            `${csvEscape(item.time)},` +
+            `"Front",` +
+            `"front.jpg"\n`;
+
+        csv +=
+            `${csvEscape(item.id)},` +
+            `${csvEscape(item.employee)},` +
+            `${csvEscape(item.part)},` +
+            `${csvEscape(item.date)},` +
+            `${csvEscape(item.time)},` +
+            `"Middle",` +
+            `"middle.jpg"\n`;
+
+        csv +=
+            `${csvEscape(item.id)},` +
+            `${csvEscape(item.employee)},` +
+            `${csvEscape(item.part)},` +
+            `${csvEscape(item.date)},` +
+            `${csvEscape(item.time)},` +
+            `"Back",` +
+            `"back.jpg"\n`;
+
+    });
+
+
+    return csv;
+}
+
+
+document
+    .getElementById("search")
+    .addEventListener(
+        "input",
+        render
+    );
+
+
+document
+    .getElementById("dateFilter")
+    .addEventListener(
+        "change",
+        render
+    );
+
+
+render();
+</script>
+
+
+<!-- JSZip สำหรับสร้าง ZIP -->
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+
+</body>
+</html>
