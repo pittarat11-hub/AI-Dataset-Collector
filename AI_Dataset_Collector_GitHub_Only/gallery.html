@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#eef5f7">
+<title>Gallery - AI Dataset Collector</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div><h1>AI Dataset Collector</h1><p>Gallery / Dataset</p></div>
+  <nav><a href="index.html">Home</a><a class="active" href="gallery.html">Gallery</a></nav>
+</header>
+<main class="container">
+<section class="card">
+  <div class="section-title"><span>01</span><h2>ค้นหา</h2></div>
+  <div class="filters"><input id="search" type="search" placeholder="ค้นหา Part หรือชื่อพนักงาน"><input id="dateFilter" type="date"><button id="allZip" class="btn primary">ดาวน์โหลดทั้งหมด ZIP</button><button id="clearAll" class="btn danger">ลบทั้งหมด</button></div>
+</section>
+<section class="card">
+  <div class="gallery-head"><div><h2>Dataset ที่บันทึก</h2><p id="count"></p></div><button id="csv" class="btn secondary">ดาวน์โหลด CSV</button></div>
+  <div id="gallery" class="gallery-grid"></div>
+</section>
+</main>
+<div id="modal" class="modal hidden"><div class="modal-content"><button id="close" class="modal-close">×</button><h2 id="modalTitle"></h2><p id="modalInfo"></p><div id="modalImages" class="modal-images"></div><button id="oneZip" class="btn primary">ดาวน์โหลด Dataset นี้</button><button id="deleteOne" class="btn danger">ลบ Dataset นี้</button></div></div>
+<script src="js/gallery.js"></script>
+</body>
+</html>
